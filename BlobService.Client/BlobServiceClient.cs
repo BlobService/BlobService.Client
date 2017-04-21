@@ -1,58 +1,87 @@
-﻿using RestSharp;
+﻿using RestEase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace BlobService.Client
 {
     public class BlobServiceClient : IBlobServiceClient
     {
-        public string Endpoint { get; internal set; }
-        private RestClient _client;
+        public string Endpoint { get; set; }
+
+        private IBlobServiceApi _blobApi;
         public BlobServiceClient(string endpoint)
         {
-            Endpoint = endpoint;
-            _client = new RestClient(Endpoint);
+            Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+            _blobApi = RestClient.For<IBlobServiceApi>(endpoint);
         }
 
-        public async Task<IBlobContainer> GetContainerByIdAsync(string id)
+        public async Task<Blob> GetBlobByIdAsync(string blobId)
         {
-            var request = new RestRequest("containers/get/{id}", Method.GET);
-            request.AddParameter("id", id, ParameterType.UrlSegment);
-            var result = await _client.ExecuteTaskAsync<BlobContainer>(request);
-            var container = result.Data;
-            if (container != null)
+            var blob = await _blobApi.GetBlobByIdAsync(blobId);
+            return blob;
+        }
+
+        public async Task DeleteBlobAsync(string blobId)
+        {
+            await _blobApi.DeleteBlobAsync(blobId);
+        }
+
+        public async Task<Container> GetContainerByIdAsync(string containerId)
+        {
+            var container = await _blobApi.GetContainerByIdAsync(containerId);
+            return container;
+        }
+
+        public async Task<Container> GetContainerByNameAsync(string containerName, bool creatIfDoesntExist = true)
+        {
+            var container = await _blobApi.GetContainerByNameAsync(containerName);
+            if(container == null)
             {
-                container.Client = _client;
+                container = await AddContainerAsync(containerName);
             }
             return container;
         }
 
-        public async Task<IBlobContainer> GetContainerByNameAsync(string name, bool createIfNotExist = true)
+        public async Task<Container> AddContainerAsync(string containerName)
         {
-            var request = new RestRequest("containers/get", Method.GET);
-            request.AddParameter("name", name);
-            var result = await _client.ExecuteTaskAsync<BlobContainer>(request);
-            var container = result.Data;
-            if (container != null)
+            var container = await _blobApi.AddContainerAsync(new Container()
             {
-                container.Client = _client;
-            }
-            else if (result.StatusCode == System.Net.HttpStatusCode.NotFound && createIfNotExist)
-            {
-                var createRequest = new RestRequest("containers/add", Method.POST);
-                createRequest.RequestFormat = DataFormat.Json;
-                createRequest.AddBody(new { name = "name" });
-                var createResult = await _client.ExecuteTaskAsync<BlobContainer>(request);
-                container = createResult.Data;
-                if (container != null)
-                {
-                    container.Client = _client;
-                }
-            }
+                Name = containerName
+            });
             return container;
+        }
+
+        public async Task DeleteContainerAsync(string containerId)
+        {
+            await _blobApi.DeleteContainerAsync(containerId);
+        }
+
+        public async Task<IEnumerable<Blob>> ListBlobsAsync(string containerId)
+        {
+            var blobs = await _blobApi.ListBlobsAsync(containerId);
+            return blobs;
+        }
+
+        public async Task<Blob> AddBlobAsync(string containerId, string fileName, Stream file)
+        {
+            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"" };
+            var contentType = new MediaTypeHeaderValue("application/octet-stream");
+            var blob = await _blobApi.AddBlobAsync(containerId, contentDisposition, contentType, file);
+            return blob;
+        }
+
+        public async Task<Blob> UpdateBlobAsync(string blobId, string fileName, Stream file)
+        {
+            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"" };
+            var contentType = new MediaTypeHeaderValue("application/octet-stream");
+            var blob = await _blobApi.UpdateBlobAsync(blobId, contentDisposition, contentType, file);
+            return blob;
         }
     }
 }
