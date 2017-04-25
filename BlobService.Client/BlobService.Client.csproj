@@ -2,10 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.4</TargetFramework>
+    <Version>0.1.1</Version>
+    <Authors>BlobService</Authors>
+    <Company>BlobService</Company>
+    <Product>BlobService</Product>
+    <Description>BlobService.Client library for interacting with BlobService</Description>
+    <Copyright>Copyright Aram Kocharyan</Copyright>
+    <PackageIconUrl>https://avatars2.githubusercontent.com/u/26712995</PackageIconUrl>
+    <RepositoryUrl>https://github.com/BlobService/BlobService.Client</RepositoryUrl>
+    <RepositoryType></RepositoryType>
+    <PackageTags>blobservice, blobs, files, netstandard</PackageTags>
+    <PackageProjectUrl>https://github.com/BlobService/BlobService.Client</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/BlobService/BlobService.Client/blob/master/LICENSE.md</PackageLicenseUrl>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RestEase" Version="1.3.3" />
+    <PackageReference Include="RestEase" Version="1.4.0" />
   </ItemGroup>
 
 </Project>
