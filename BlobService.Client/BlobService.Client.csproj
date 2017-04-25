@@ -14,6 +14,7 @@
     <PackageTags>blobservice, blobs, files, netstandard</PackageTags>
     <PackageProjectUrl>https://github.com/BlobService/BlobService.Client</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/BlobService/BlobService.Client/blob/master/LICENSE.md</PackageLicenseUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
