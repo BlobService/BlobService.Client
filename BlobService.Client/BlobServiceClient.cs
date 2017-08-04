@@ -1,87 +1,108 @@
-﻿using RestEase;
+﻿using BlobService.Client.DTO;
+using BlobService.Client.Helpers;
+using BlobService.Client.Util;
+using RestEase;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
 
 namespace BlobService.Client
 {
     public class BlobServiceClient : IBlobServiceClient
     {
-        public string Endpoint { get; set; }
-
-        private IBlobServiceApi _blobApi;
-        public BlobServiceClient(string endpoint)
+        public BlobServiceClient(Uri baseUri) :
+            this(baseUri,
+                RestClient.For<IBlobServiceContainersAPI>(baseUri),
+                RestClient.For<IBlobServiceBlobsAPI>(baseUri)
+                )
         {
-            Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-            _blobApi = RestClient.For<IBlobServiceApi>(endpoint);
         }
 
-        public async Task<Blob> GetBlobByIdAsync(string blobId)
+        internal BlobServiceClient(Uri baseUri, IBlobServiceContainersAPI containersApi,
+                                    IBlobServiceBlobsAPI blobsApi)
         {
-            var blob = await _blobApi.GetBlobByIdAsync(blobId);
-            return blob;
+            this.BaseUri = baseUri;
+            ContainersApiClient = containersApi;
+            BlobsApiClient = blobsApi;
         }
 
-        public async Task DeleteBlobAsync(string blobId)
-        {
-            await _blobApi.DeleteBlobAsync(blobId);
-        }
+        /// <summary>
+        /// Gets the Blob service endpoint.
+        /// </summary>
+        /// <value>An object of type <see cref="BaseUri"/> containing Blob service URI.</value>
+        public Uri BaseUri { get; private set; }
 
-        public async Task<Container> GetContainerByIdAsync(string containerId)
-        {
-            var container = await _blobApi.GetContainerByIdAsync(containerId);
-            return container;
-        }
+        internal IBlobServiceBlobsAPI BlobsApiClient { get; private set; }
+        internal IBlobServiceContainersAPI ContainersApiClient { get; private set; }
 
-        public async Task<Container> GetContainerByNameAsync(string containerName, bool creatIfDoesntExist = true)
+        public virtual async Task<Blob> GetBlobReferenceAsync(string containerName, string blobId)
         {
-            var container = await _blobApi.GetContainerByNameAsync(containerName);
-            if(container == null)
+            Utility.AssertNotNullOrEmpty(nameof(blobId), blobId);
+            var retrieveBlobApiCallresult = await this.BlobsApiClient.GetBlobByIdAsync(blobId);
+
+            if (false == retrieveBlobApiCallresult.ResponseMessage.IsSuccessStatusCode)
             {
-                container = await AddContainerAsync(containerName);
+                if (retrieveBlobApiCallresult.ResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw ExceptionGenerator.BlobNotFoundException(blobId);
+                }
+                else
+                {
+                    throw ExceptionGenerator.GeneralFailureException(retrieveBlobApiCallresult.StringContent);
+                }
             }
-            return container;
+
+            var blobDTO = retrieveBlobApiCallresult.GetContent();
+
+            var container = await GetContainerReferenceAsync(containerName);
+
+            var blob = new Blob(this, container, blobDTO.Id, blobDTO.OrigFileName,
+                                    blobDTO.MimeType, blobDTO.SizeInBytes, blobDTO.DownloadRelativeUrl);
+
+            return blob;
         }
 
-        public async Task<Container> AddContainerAsync(string containerName)
+        public virtual async Task<BlobContainer> GetContainerReferenceAsync(string containerName)
         {
-            var container = await _blobApi.AddContainerAsync(new Container()
+            Utility.AssertNotNullOrEmpty(nameof(containerName), containerName);
+            var response = await ContainersApiClient.GetContainerByNameAsync(containerName);
+            if (response.ResponseMessage.IsSuccessStatusCode == false)
             {
-                Name = containerName
-            });
-            return container;
+                if (response.ResponseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    throw ExceptionGenerator.ContainerNotFoundException($"Container {containerName} not found.");
+                }
+
+                throw ExceptionGenerator.GeneralFailureException(response.StringContent);
+            }
+
+            var containerDTO = response.GetContent();
+            return new BlobContainer(containerDTO.Name, containerDTO.Id, this);
         }
 
-        public async Task DeleteContainerAsync(string containerId)
+        public virtual async Task<IEnumerable<BlobContainer>> ListContainersAsync()
         {
-            await _blobApi.DeleteContainerAsync(containerId);
+            var containersResponse = await ContainersApiClient.ListContainersAsync();
+            if (!containersResponse.ResponseMessage.IsSuccessStatusCode)
+            {
+                throw ExceptionGenerator.GeneralFailureException(containersResponse.StringContent);
+            }
+            var conainersDTO = containersResponse.GetContent();
+            return conainersDTO.Select(c => new BlobContainer(c.Name, c.Id, this));
         }
 
-        public async Task<IEnumerable<Blob>> ListBlobsAsync(string containerId)
+        public virtual async Task<BlobContainer> CreateContainerAsync(string containerName)
         {
-            var blobs = await _blobApi.ListBlobsAsync(containerId);
-            return blobs;
-        }
+            var serviceResponse = await ContainersApiClient.CreateContainerAsync(
+                                            new ContainerDTO() { Name = containerName });
+            if (false == serviceResponse.ResponseMessage.IsSuccessStatusCode)
+            {
+                throw ExceptionGenerator.GeneralFailureException(serviceResponse.StringContent);
+            }
 
-        public async Task<Blob> AddBlobAsync(string containerId, string fileName, Stream file)
-        {
-            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"" };
-            var contentType = new MediaTypeHeaderValue("application/octet-stream");
-            var blob = await _blobApi.AddBlobAsync(containerId, contentDisposition, contentType, file);
-            return blob;
-        }
-
-        public async Task<Blob> UpdateBlobAsync(string blobId, string fileName, Stream file)
-        {
-            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"" };
-            var contentType = new MediaTypeHeaderValue("application/octet-stream");
-            var blob = await _blobApi.UpdateBlobAsync(blobId, contentDisposition, contentType, file);
-            return blob;
+            var container = serviceResponse.GetContent();
+            return new BlobContainer(container.Name, container.Id, this);
         }
     }
 }

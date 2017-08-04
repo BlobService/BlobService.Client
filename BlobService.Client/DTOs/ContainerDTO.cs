@@ -1,6 +1,6 @@
-﻿namespace BlobService.Client
+﻿namespace BlobService.Client.DTO
 {
-    public class Container 
+    public class ContainerDTO
     {
         public string Id { get; set; }
         public string Name { get; set; }
