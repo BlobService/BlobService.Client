@@ -55,6 +55,11 @@ namespace BlobService.Client.UnitTests.Mocks
             return Task.FromResult(response);
         }
 
+        public Task<Response<BlobDTO>> AddBlobInternalAsync([Path] string containerId, [Body] HttpContent content)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<Response<ContainerDTO>> CreateContainerAsync([Body] ContainerDTO container)
         {
             container.Id = Guid.NewGuid().ToString("D");

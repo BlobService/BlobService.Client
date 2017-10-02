@@ -3,7 +3,6 @@ using RestEase;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace BlobService.Client
@@ -30,11 +29,9 @@ namespace BlobService.Client
         Task<Response<IEnumerable<BlobDTO>>> ListContainerBlobsAsync([Path] string id);
 
         [Post("/containers/{containerId}/blobs")]
-        Task<Response<BlobDTO>> AddBlobAsync(
+        Task<Response<BlobDTO>> AddBlobInternalAsync(
                [Path] string containerId,
-               [Header("Content-Disposition")] ContentDispositionHeaderValue contentDisposition,
-               [Header("Content-Type")] MediaTypeHeaderValue contentType,
-               [Body] Stream file
+               [Body] HttpContent content
            );
     }
 }

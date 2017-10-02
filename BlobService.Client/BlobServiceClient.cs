@@ -14,17 +14,19 @@ namespace BlobService.Client
         public BlobServiceClient(Uri baseUri) :
             this(baseUri,
                 RestClient.For<IBlobServiceContainersAPI>(baseUri),
-                RestClient.For<IBlobServiceBlobsAPI>(baseUri)
+                RestClient.For<IBlobServiceBlobsAPI>(baseUri),
+                RestClient.For<IBlobServiceBlobMetaDatasAPI>(baseUri)
                 )
         {
         }
 
         internal BlobServiceClient(Uri baseUri, IBlobServiceContainersAPI containersApi,
-                                    IBlobServiceBlobsAPI blobsApi)
+                                    IBlobServiceBlobsAPI blobsApi, IBlobServiceBlobMetaDatasAPI metaDataApi)
         {
             this.BaseUri = baseUri;
             ContainersApiClient = containersApi;
             BlobsApiClient = blobsApi;
+            MetaDatasApiClient = metaDataApi;
         }
 
         /// <summary>
@@ -35,6 +37,7 @@ namespace BlobService.Client
 
         internal IBlobServiceBlobsAPI BlobsApiClient { get; private set; }
         internal IBlobServiceContainersAPI ContainersApiClient { get; private set; }
+        internal IBlobServiceBlobMetaDatasAPI MetaDatasApiClient { get; private set; }
 
         public virtual async Task<Blob> GetBlobReferenceAsync(string containerName, string blobId)
         {

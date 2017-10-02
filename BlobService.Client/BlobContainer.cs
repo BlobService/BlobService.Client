@@ -87,7 +87,7 @@ namespace BlobService.Client
 
         public virtual async Task<Blob> UploadBlobAsync(Stream file, string fileName, string contentType, CancellationToken cancellationToken)
         {
-            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"" };
+            var contentDisposition = new ContentDispositionHeaderValue("form-data") { FileName = $"\"{fileName}\"", Name = "file" };
             var contentMimeType = new MediaTypeHeaderValue(contentType);
             var serviceResponse = await _containersApi.AddBlobAsync(this.Id, contentDisposition, contentMimeType, file);
 

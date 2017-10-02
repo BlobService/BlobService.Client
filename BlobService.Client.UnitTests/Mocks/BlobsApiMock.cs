@@ -114,5 +114,10 @@ namespace BlobService.Client.UnitTests.Mocks
 
             return Task.FromResult(response);
         }
+
+        public Task<Response<BlobDTO>> UpdateBlobInternalAsync([Path] string id, [Body] HttpContent content)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

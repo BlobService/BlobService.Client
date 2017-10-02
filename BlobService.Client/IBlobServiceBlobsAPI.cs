@@ -2,7 +2,6 @@
 using RestEase;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace BlobService.Client
@@ -17,11 +16,9 @@ namespace BlobService.Client
         Task<Response<Stream>> RawBlobAsync([Path] string id);
 
         [Put("/blobs/{id}")]
-        Task<Response<BlobDTO>> UpdateBlobAsync(
+        Task<Response<BlobDTO>> UpdateBlobInternalAsync(
                 [Path] string id,
-                [Header("Content-Disposition")] ContentDispositionHeaderValue contentDisposition,
-                [Header("Content-Type")] MediaTypeHeaderValue contentType,
-                [Body] Stream file
+                [Body]HttpContent content
             );
 
         [Delete("blobs/{id}")]
