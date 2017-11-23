@@ -177,7 +177,7 @@ namespace BlobService.Client
                 }
             }
 
-            return serviceResponse.GetContent();
+            return await serviceResponse.ResponseMessage.Content.ReadAsStreamAsync();
         }
 
         public virtual Task UpdateBlobAsync(Stream file, string fileName, string contentType)
