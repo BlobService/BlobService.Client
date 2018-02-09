@@ -46,7 +46,7 @@ namespace BlobService.Client.UnitTests
             IBlobServiceBlobMetaDatasAPI metDataApi = new BlobMetaDatasApiMock(data, options);
 
             //Fake url, which is just needed for Uri constructor
-            return new BlobServiceClient(new Uri(@"http://localhost/"), containerApi, blobsApi, metDataApi);
+            return new BlobServiceClient(new Uri(@"http://localhost/"), containerApi, blobsApi, metDataApi, BlobServiceClientOptions.Default);
         }
     }
 }

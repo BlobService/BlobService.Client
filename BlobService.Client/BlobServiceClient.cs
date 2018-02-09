@@ -15,18 +15,31 @@ namespace BlobService.Client
             this(baseUri,
                 RestClient.For<IBlobServiceContainersAPI>(baseUri),
                 RestClient.For<IBlobServiceBlobsAPI>(baseUri),
-                RestClient.For<IBlobServiceBlobMetaDatasAPI>(baseUri)
+                RestClient.For<IBlobServiceBlobMetaDatasAPI>(baseUri),
+                BlobServiceClientOptions.Default
+                )
+        {
+        }
+
+        public BlobServiceClient(Uri baseUri, BlobServiceClientOptions options) :
+            this(baseUri,
+                RestClient.For<IBlobServiceContainersAPI>(baseUri),
+                RestClient.For<IBlobServiceBlobsAPI>(baseUri),
+                RestClient.For<IBlobServiceBlobMetaDatasAPI>(baseUri),
+                options
                 )
         {
         }
 
         internal BlobServiceClient(Uri baseUri, IBlobServiceContainersAPI containersApi,
-                                    IBlobServiceBlobsAPI blobsApi, IBlobServiceBlobMetaDatasAPI metaDataApi)
+            IBlobServiceBlobsAPI blobsApi, IBlobServiceBlobMetaDatasAPI metaDataApi, 
+            BlobServiceClientOptions options)
         {
             this.BaseUri = baseUri;
             ContainersApiClient = containersApi;
             BlobsApiClient = blobsApi;
             MetaDatasApiClient = metaDataApi;
+            clientOptions = options;
         }
 
         /// <summary>
@@ -34,11 +47,10 @@ namespace BlobService.Client
         /// </summary>
         /// <value>An object of type <see cref="BaseUri"/> containing Blob service URI.</value>
         public Uri BaseUri { get; private set; }
-
         internal IBlobServiceBlobsAPI BlobsApiClient { get; private set; }
         internal IBlobServiceContainersAPI ContainersApiClient { get; private set; }
         internal IBlobServiceBlobMetaDatasAPI MetaDatasApiClient { get; private set; }
-
+        internal BlobServiceClientOptions clientOptions { get; private set; }
         public virtual async Task<Blob> GetBlobReferenceAsync(string containerName, string blobId)
         {
             Utility.AssertNotNullOrEmpty(nameof(blobId), blobId);

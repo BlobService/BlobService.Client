@@ -22,8 +22,7 @@ namespace BlobService.Client.UnitTests
             var blob = await client.GetBlobReferenceAsync(containerName, blobId);
 
             await blob.DeleteAsync();
-
-            Assert.False(data.Blobs.Any(b => b.Id == blobId));
+            Assert.DoesNotContain(data.Blobs, b => b.Id == blobId);
         }
 
         [Fact]

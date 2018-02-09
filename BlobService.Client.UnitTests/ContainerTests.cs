@@ -20,8 +20,7 @@ namespace BlobService.Client.UnitTests
 
             BlobContainer container = await client.GetContainerReferenceAsync(containerName);
             await container.DeleteAsync();
-
-            Assert.False(data.Containers.Any(c => c.Name == container.Name));
+            Assert.DoesNotContain(data.Containers, c => c.Name == container.Name);
         }
 
         [Fact]
@@ -64,7 +63,7 @@ namespace BlobService.Client.UnitTests
 
             var blobs = await container.ListBlobsAsync();
 
-            Assert.Equal(blobs.Count(), 1);
+            Assert.Single(blobs);
         }
 
         [Fact]
